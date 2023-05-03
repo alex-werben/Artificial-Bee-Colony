@@ -5,17 +5,22 @@ import numpy as np
 
 
 class ArtificialBeeColony:
-    def __init__(self, max_cycles=10, max_food_sources_=5) -> None:
+    def __init__(self,
+                 max_cycles: int = 10,
+                 colony_size: int = 5,
+                 num_solutions: int = 1,
+                 ) -> None:
         self.best_food_sources = None  # best source so far
         self._max_cycles = max_cycles
-        self._max_food_sources = max_food_sources_
+        self._colony_size = colony_size
+        self._max_food_sources = colony_size // 2
         self.food_sources = []
-        self._scout_limit = 2
-        self.num_solutions = 1
+        self._trial_limit = colony_size
+        self._num_solutions = num_solutions
         self._colony_size = 5
 
-    def get_scout_limit(self) -> int:
-        return self._scout_limit
+    def get_trial_limit(self) -> int:
+        return self._trial_limit
 
     def get_new_based_on(self, food_source: FoodSource, fs_num: int) -> FoodSource:
         """
@@ -96,7 +101,8 @@ class ArtificialBeeColony:
                 if r <= prop_sum:
                     new_food_source = self.get_new_based_on(food_source, fs_num)
 
-                    if food_source.get_nectar() < new_food_source.get_nectar():
+                    # if food_source.get_nectar() < new_food_source.get_nectar():
+                    if food_source.get_nectar() > new_food_source.get_nectar():
                         self.food_sources[fs_num] = new_food_source
                     else:
                         food_source.increment_trial_count()
@@ -111,13 +117,14 @@ class ArtificialBeeColony:
             if not food_sources_map.get(food_source.get_id()):
                 food_sources_map[food_source.get_id()] = food_source
             else:
-                if food_sources_map[food_source.get_id()].get_nectar() < food_source.get_nectar():
+                # if food_sources_map[food_source.get_id()].get_nectar() < food_source.get_nectar():
+                if food_sources_map[food_source.get_id()].get_nectar() > food_source.get_nectar():
                     food_sources_map[food_source.get_id()] = food_source
 
         unique_food_sources = list(food_sources_map.values())
         unique_food_sources.sort()
 
-        self.best_food_sources = unique_food_sources[:self.num_solutions]
+        self.best_food_sources = unique_food_sources[:self._num_solutions]
         for fs in self.best_food_sources:
             fs.reset_trial_count()
 
@@ -126,18 +133,23 @@ class ArtificialBeeColony:
         Scouts find random new food sources which
         may be either better or worse than the old one.
         """
-        scout_limit = self.get_scout_limit()
+        trial_limit = self.get_trial_limit()
 
-        max_trial_fs = self.food_sources[0]
-        max_trial_fs_num = 0
         for fs_num, food_source in enumerate(self.food_sources):
-            if food_source.get_trial_count() > max_trial_fs.get_trial_count():
-                max_trial_fs = food_source
-                max_trial_fs_num = fs_num
+            if food_source.get_trial_count() >= trial_limit:
+                new_food_source = self.generate_new_food_source()
+                self.food_sources[fs_num] = new_food_source
 
-        if max_trial_fs.get_trial_count() > scout_limit:
-            new_food_source = self.generate_new_food_source()
-            self.food_sources[max_trial_fs_num] = new_food_source
+        # max_trial_fs = self.food_sources[0]
+        # max_trial_fs_num = 0
+        # for fs_num, food_source in enumerate(self.food_sources):
+        #     if food_source.get_trial_count() > max_trial_fs.get_trial_count():
+        #         max_trial_fs = food_source
+        #         max_trial_fs_num = fs_num
+        #
+        # if max_trial_fs.get_trial_count() > trial_limit:
+        #     new_food_source = self.generate_new_food_source()
+        #     self.food_sources[max_trial_fs_num] = new_food_source
 
     def run(self) -> None:
         """
@@ -150,6 +162,7 @@ class ArtificialBeeColony:
 
         self.memorize_best_food_sources()
         for cycle in range(max_cycles):
+            print(f"Cycle: {cycle}")
             self.send_employed_bees()
 
             self.update_probabilities()
@@ -160,8 +173,8 @@ class ArtificialBeeColony:
 
             self.send_scout_bees()
 
-            for fs in self.food_sources:
-                fs.log_data(cycle)
+            for index, fs in enumerate(self.food_sources):
+                fs.log_data(cycle, index)
 
-            for fs in self.best_food_sources:
-                fs.log_best(cycle)
+            for index, fs in enumerate(self.best_food_sources):
+                fs.log_best(cycle, index)

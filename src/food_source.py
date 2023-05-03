@@ -6,8 +6,8 @@ import os
 
 class FoodSource:
     def __init__(self,
-                 lower_limit: float = -1.0,
-                 upper_limit: float = 1.0,
+                 lower_limit: float = -5.0,
+                 upper_limit: float = 5.0,
                  nectar: float = 1000.0,
                  probability: float = 0.0,
                  dimensions: int = 2
@@ -116,28 +116,28 @@ class FoodSource:
 
         x1, x2 = self.get_parameters()
 
-        # fn_val = (x1**2 + x2 - 11)**2 + (x1 + x2**2 - 7)**2
+        fn_val = (x1**2 + x2 - 11)**2 + (x1 + x2**2 - 7)**2
 
-        for x in self.get_parameters():
-            fn_val += x ** 2
+        # for x in self.get_parameters():
+        #     fn_val += x ** 2
 
         return fn_val
 
-    def log_data(self, cycle: int) -> None:
+    def log_data(self, cycle: int, index: int) -> None:
         line = f"{cycle},"
         for p in self.get_parameters():
             line += f"{p},"
-        # line += f"{self.get_fn_val()},{self.get_nectar()}"
         line += "\n"
-        os.makedirs(f"data/{cycle}/", exist_ok=True)
-        with open(f"data/{cycle}/{self.get_id()}.csv", 'a') as fp:
+        os.makedirs(f"data/train/", exist_ok=True)
+
+        with open(f"data/train/{index}.csv", 'a') as fp:
             fp.write(line)
 
-    def log_best(self, cycle: int) -> None:
+    def log_best(self, cycle: int, index: int) -> None:
         os.makedirs("data/best/", exist_ok=True)
         line = f"{cycle},"
         for p in self.get_parameters():
             line += f"{p},"
         line += '\n'
-        with open(f"data/best/best.csv", 'a') as fp:
+        with open(f"data/best/{index}.csv", 'a') as fp:
             fp.write(line)
