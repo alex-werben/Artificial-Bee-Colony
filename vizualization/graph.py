@@ -1,0 +1,36 @@
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+import pandas as pd
+import os
+
+def make_data():
+    x = np.arange(-1, 1, 0.05)
+    y = np.arange(-1, 1, 0.05)
+    xgrid, ygrid = np.meshgrid(x, y)
+
+    z = xgrid**2 + ygrid**2
+    return xgrid, ygrid, z
+
+fig, ax = plt.subplots()
+
+def animate(i):
+    ax.clear()
+    # print(i)
+    ax.contour(x, y, z, levels=20)
+    # cs.clabel(colors='black', inline=False)
+    with open("../data/best/best.csv") as fp:
+        lines = fp.readlines()
+        arr = lines[i].split(",")
+        x1, x2 = float(arr[1]), float(arr[2])
+        ax.scatter(x1, x2)
+
+    ax.text(0, 1.05, f"{i}", ha="center", va="center", transform=ax.transAxes, bbox=dict(facecolor="none"))
+
+
+if __name__ == '__main__':
+    x, y, z = make_data()
+
+    ani = animation.FuncAnimation(fig, animate, 9, interval=500, blit=False)
+
+    plt.show()
