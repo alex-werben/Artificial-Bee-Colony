@@ -6,18 +6,23 @@ import numpy as np
 
 class ArtificialBeeColony:
     def __init__(self,
+                 solution: np.array = None,
+                 eps: float = 0.1,
                  max_cycles: int = 10,
                  colony_size: int = 5,
                  num_solutions: int = 1,
+                 dimensions: int = 2,
                  ) -> None:
-        self.best_food_sources = None  # best source so far
+        self.best_food_sources = None
         self._max_cycles = max_cycles
         self._colony_size = colony_size
         self._max_food_sources = colony_size // 2
         self.food_sources = []
         self._trial_limit = colony_size
         self._num_solutions = num_solutions
-        self._colony_size = 5
+        self._solution = solution
+        self._eps = eps
+        self._dimensions = dimensions
 
     def get_trial_limit(self) -> int:
         return self._trial_limit
@@ -41,7 +46,7 @@ class ArtificialBeeColony:
         return new_food_source
 
     def generate_new_food_source(self) -> FoodSource:
-        new_food_source = FoodSource()
+        new_food_source = FoodSource(dimensions=self._dimensions)
         new_food_source.set_parameters()
         return new_food_source
 
@@ -71,7 +76,7 @@ class ArtificialBeeColony:
         Update desirability of food sources.
         Onlooker bees will now pick food source and
         explore the neighborhood, replacing with better
-        food sources when found
+        food sources when found.
         """
         # nectar_sum = reduce(lambda acc, food_source: acc + food_source.get_nectar(), self.food_sources)
         nectar_sum = 0
@@ -150,6 +155,88 @@ class ArtificialBeeColony:
         # if max_trial_fs.get_trial_count() > trial_limit:
         #     new_food_source = self.generate_new_food_source()
         #     self.food_sources[max_trial_fs_num] = new_food_source
+
+    def experiment1(self) -> int:
+        """
+        Find number of required iterations to get desired accuracy of solution.
+        :return: number of iterations
+        """
+        best_food_source = None
+
+        self.initialize_food_sources()
+        self.memorize_best_food_sources()
+        cycle = 0
+        while abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution)) > self._eps:
+            if cycle % 100 == 0:
+                print(f"Cycle: {cycle}")
+            self.send_employed_bees()
+
+            self.update_probabilities()
+
+            self.send_onlooker_bees()
+
+            self.memorize_best_food_sources()
+
+            self.send_scout_bees()
+            cycle += 1
+
+        return cycle
+
+    def experiment2(self):
+        best_food_source = None
+
+        self.initialize_food_sources()
+        self.memorize_best_food_sources()
+        cycle = 0
+        while abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution)) > self._eps:
+            if cycle % 500 == 0:
+                print(f"Cycle: {cycle}")
+            self.send_employed_bees()
+
+            self.update_probabilities()
+
+            self.send_onlooker_bees()
+
+            self.memorize_best_food_sources()
+
+            self.send_scout_bees()
+            cycle += 1
+
+        # self.best_food_sources[0].function_value()
+        iteration_num = cycle
+        exp_f = abs(self.best_food_sources[0].function_value() - 0)
+        exp_x = abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution))
+        return iteration_num, exp_f, exp_x
+
+    def experiment3(self):
+        best_food_source = None
+
+        self.initialize_food_sources()
+        self.memorize_best_food_sources()
+        cycle = 0
+        n_plus = 0
+        while cycle < 1000:
+            self.send_employed_bees()
+
+            self.update_probabilities()
+
+            self.send_onlooker_bees()
+
+            self.memorize_best_food_sources()
+
+            self.send_scout_bees()
+
+            if abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution)) < self._eps:
+                n_plus += 1
+
+            cycle += 1
+
+        # self.best_food_sources[0].function_value()
+        success_p = n_plus / cycle
+        exp_f = abs(self.best_food_sources[0].function_value() - 0)
+        exp_x = abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution))
+        return success_p, exp_f, exp_x
+
 
     def run(self) -> None:
         """

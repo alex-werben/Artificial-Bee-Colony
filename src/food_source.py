@@ -114,12 +114,14 @@ class FoodSource:
         """
         fn_val = 0.0
 
-        x1, x2 = self.get_parameters()
+        # x1, x2 = self.get_parameters()
+        #
+        # fn_val = (x1**2 + x2 - 11)**2 + (x1 + x2**2 - 7)**2
 
-        fn_val = (x1**2 + x2 - 11)**2 + (x1 + x2**2 - 7)**2
+        for x in self.get_parameters():
+            fn_val += (x**2 - 10 * np.cos(2 * np.pi * x))
 
-        # for x in self.get_parameters():
-        #     fn_val += x ** 2
+        fn_val += 10 * len(self.get_parameters())
 
         return fn_val
 

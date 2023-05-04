@@ -46,7 +46,7 @@ def animate(i):
 
 def main():
     ani = animation.FuncAnimation(fig, animate, params['max_cycles'] - 1,
-                                  interval=250, blit=False)
+                                  interval=400, blit=False)
 
     plt.show()
 
