@@ -1,5 +1,4 @@
-from functools import reduce
-
+from __future__ import annotations
 from src.food_source import FoodSource
 import numpy as np
 
@@ -17,7 +16,7 @@ class ArtificialBeeColony:
         self._max_cycles = max_cycles
         self._colony_size = colony_size
         self._max_food_sources = colony_size // 2
-        self.food_sources = []
+        self.food_sources: list[FoodSource] = []
         self._trial_limit = colony_size
         self._num_solutions = num_solutions
         self._solution = solution
@@ -29,10 +28,7 @@ class ArtificialBeeColony:
 
     def get_new_based_on(self, food_source: FoodSource, fs_num: int) -> FoodSource:
         """
-        Get new food source based on an old one and its neighbor
-        :param food_source:
-        :param fs_num:
-        :return: FoodSource
+        Get new food source based on an old one and its neighbor.
         """
         fs_count = self._max_food_sources
         neighbor_fs_num = np.random.randint(0, fs_count - 1)
@@ -42,6 +38,35 @@ class ArtificialBeeColony:
             neighbor_fs_num += 1
 
         new_food_source = food_source.get_neighboring(self.food_sources[neighbor_fs_num])
+
+        return new_food_source
+
+    def get_nearest_neighbor(self, food_source: FoodSource, fs_num: int) -> FoodSource:
+        """
+        Get new food source based on modified nearest neighbor.
+        """
+        s: list[FoodSource] = []
+        dist = 10e2
+        nearest_neighbor = None
+
+        # Create set of better solutions
+        for i in range(self._max_food_sources):
+            if i == fs_num:
+                continue
+            if self.food_sources[i].get_nectar() > food_source.get_nectar():
+                s.append(self.food_sources[i])
+
+        # Find nearest neighbor
+        if len(s) > 0:
+            for fs in s:
+                current_dist = np.linalg.norm(np.array(fs.get_parameters()) - np.array(food_source.get_parameters()))
+                if current_dist < dist:
+                    nearest_neighbor = fs
+                    dist = current_dist
+        else:
+            return food_source
+
+        new_food_source = food_source.get_neighboring(nearest_neighbor)
 
         return new_food_source
 
@@ -64,9 +89,10 @@ class ArtificialBeeColony:
         """
         for fs_num in range(len(self.food_sources)):
             new_food_source = self.get_new_based_on(self.food_sources[fs_num], fs_num)
+            # new_food_source = self.get_nearest_neighbor(self.food_sources[fs_num], fs_num)
 
-            # if self.food_sources[fs_num].get_nectar() < new_food_source.get_nectar():
-            if self.food_sources[fs_num].get_nectar() > new_food_source.get_nectar():
+            if self.food_sources[fs_num].get_nectar() < new_food_source.get_nectar():
+            # if self.food_sources[fs_num].get_nectar() > new_food_source.get_nectar():
                 self.food_sources[fs_num] = new_food_source
             else:
                 self.food_sources[fs_num].increment_trial_count()
@@ -105,9 +131,10 @@ class ArtificialBeeColony:
 
                 if r <= prop_sum:
                     new_food_source = self.get_new_based_on(food_source, fs_num)
+                    # new_food_source = self.get_nearest_neighbor(food_source, fs_num)
 
-                    # if food_source.get_nectar() < new_food_source.get_nectar():
-                    if food_source.get_nectar() > new_food_source.get_nectar():
+                    if food_source.get_nectar() < new_food_source.get_nectar():
+                    # if food_source.get_nectar() > new_food_source.get_nectar():
                         self.food_sources[fs_num] = new_food_source
                     else:
                         food_source.increment_trial_count()
@@ -122,8 +149,8 @@ class ArtificialBeeColony:
             if not food_sources_map.get(food_source.get_id()):
                 food_sources_map[food_source.get_id()] = food_source
             else:
-                # if food_sources_map[food_source.get_id()].get_nectar() < food_source.get_nectar():
-                if food_sources_map[food_source.get_id()].get_nectar() > food_source.get_nectar():
+                if food_sources_map[food_source.get_id()].get_nectar() < food_source.get_nectar():
+                # if food_sources_map[food_source.get_id()].get_nectar() > food_source.get_nectar():
                     food_sources_map[food_source.get_id()] = food_source
 
         unique_food_sources = list(food_sources_map.values())
@@ -140,26 +167,25 @@ class ArtificialBeeColony:
         """
         trial_limit = self.get_trial_limit()
 
-        for fs_num, food_source in enumerate(self.food_sources):
-            if food_source.get_trial_count() >= trial_limit:
-                new_food_source = self.generate_new_food_source()
-                self.food_sources[fs_num] = new_food_source
-
-        # max_trial_fs = self.food_sources[0]
-        # max_trial_fs_num = 0
         # for fs_num, food_source in enumerate(self.food_sources):
-        #     if food_source.get_trial_count() > max_trial_fs.get_trial_count():
-        #         max_trial_fs = food_source
-        #         max_trial_fs_num = fs_num
-        #
-        # if max_trial_fs.get_trial_count() > trial_limit:
-        #     new_food_source = self.generate_new_food_source()
-        #     self.food_sources[max_trial_fs_num] = new_food_source
+        #     if food_source.get_trial_count() >= trial_limit:
+        #         new_food_source = self.generate_new_food_source()
+        #         self.food_sources[fs_num] = new_food_source
+
+        max_trial_fs = self.food_sources[0]
+        max_trial_fs_num = 0
+        for fs_num, food_source in enumerate(self.food_sources):
+            if food_source.get_trial_count() > max_trial_fs.get_trial_count():
+                max_trial_fs = food_source
+                max_trial_fs_num = fs_num
+
+        if max_trial_fs.get_trial_count() > trial_limit:
+            new_food_source = self.generate_new_food_source()
+            self.food_sources[max_trial_fs_num] = new_food_source
 
     def experiment1(self) -> int:
         """
         Find number of required iterations to get desired accuracy of solution.
-        :return: number of iterations
         """
         best_food_source = None
 
@@ -167,7 +193,7 @@ class ArtificialBeeColony:
         self.memorize_best_food_sources()
         cycle = 0
         while abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution)) > self._eps:
-            if cycle % 100 == 0:
+            if cycle % 1000 == 0:
                 print(f"Cycle: {cycle}")
             self.send_employed_bees()
 
@@ -236,7 +262,6 @@ class ArtificialBeeColony:
         exp_f = abs(self.best_food_sources[0].function_value() - 0)
         exp_x = abs(np.linalg.norm(np.array(self.best_food_sources[0].get_parameters()) - self._solution))
         return success_p, exp_f, exp_x
-
 
     def run(self) -> None:
         """

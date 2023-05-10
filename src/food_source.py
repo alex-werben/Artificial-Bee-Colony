@@ -30,16 +30,16 @@ class FoodSource:
 
         nectar = 0.0
 
-        nectar = self.get_fn_val()
-
-        return nectar
-
-        # if self.get_fn_val() > 0:
-        #     nectar = 1.0 / (1.0 + self.get_fn_val())
-        # else:
-        #     nectar = 1.0 + abs(self.get_fn_val())
+        # nectar = self.get_fn_val()
         #
         # return nectar
+
+        if self.get_fn_val() > 0:
+            nectar = 1.0 / (1.0 + self.get_fn_val())
+        else:
+            nectar = 1.0 + abs(self.get_fn_val())
+
+        return nectar
 
     def get_id(self) -> str:
         return self._id
@@ -114,14 +114,12 @@ class FoodSource:
         """
         fn_val = 0.0
 
-        # x1, x2 = self.get_parameters()
-        #
-        # fn_val = (x1**2 + x2 - 11)**2 + (x1 + x2**2 - 7)**2
-
         for x in self.get_parameters():
-            fn_val += (x**2 - 10 * np.cos(2 * np.pi * x))
+            fn_val += x**2
 
-        fn_val += 10 * len(self.get_parameters())
+        # for x in self.get_parameters():
+        #     fn_val += (x**2 - 10 * np.cos(2 * np.pi * x))
+        # fn_val += 10 * len(self.get_parameters())
 
         return fn_val
 

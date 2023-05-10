@@ -1,6 +1,7 @@
 import os
 import shutil
 import numpy as np
+from multiprocessing import Process, Lock, Pool
 
 from src.artificial_bee_colony import ArtificialBeeColony
 
@@ -93,6 +94,58 @@ def experiment3():
               f"exp_f={np.mean(exp_f_arr[index])},"
               f"exp_x={np.mean(exp_x_arr[index])}")
 
+def exp(iterations, lock, size: int, i: int):
+    solution = np.array([0] * size)
+    lambda_ = 0.1
+    a = 10
+    eps = lambda_ * a * np.sqrt(size)
+    abc = ArtificialBeeColony(
+        solution=solution,
+        eps=eps,
+        colony_size=40,
+        num_solutions=1,
+        dimensions=size
+    )
+    iteration_num = abc.experiment1()
+    print(f"|X|={size}, iteration_num={iteration_num}")
+    lock.acquire()
+    iterations[0].append(iteration_num)
+    # print(iterations)
+    lock.release()
+    return iteration_num
+
+
+
+def experiment_iterations():
+    """
+    Find required number of iterations to get desired accuracy.
+    Multistart = 100
+    X = [2, 4, 8, 16, 32, 64]
+    """
+    X = [2, 4, 8, 16, 32, 64]
+    multistart = 100
+    lock = Lock()
+    iterations = []
+    procs = []
+    for index, size in enumerate(X):
+        iterations.append([])
+        pool = Pool(processes=4)
+        r = pool.map(exp, (iterations[index], lock, size, 0))
+        # for i in range(4):
+        #     proc = Process(target=exp, args=(iterations, lock, size, i))
+        #     procs.append(proc)
+        #     proc.start()
+
+        # for p in procs:
+        #     p.join()
+
+
+        print(r)
+        break
+
+        with open("jupyter/data1.csv", "a") as fp:
+            fp.write(f"{size},{np.mean(iterations[index])}\n")
+
 
 def main():
     shutil.rmtree("data/")
@@ -105,14 +158,9 @@ def main():
             key, val = line.split(":")
             params[key] = int(val)
 
-    # abc = ArtificialBeeColony(
-    #     max_cycles=params["max_cycles"],
-    #     colony_size=params["colony_size"],
-    #     num_solutions=params["num_solutions"],
-    # )
-    # abc.run()
+    experiment_iterations()
 
-    experiment3()
+    # experiment3()
 
 
 
