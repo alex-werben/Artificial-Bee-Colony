@@ -30,9 +30,9 @@ def plot_best_solutions(i):
     for index in range(num_solutions):
         x1_next, x2_next = best_solutions[index][1][i], best_solutions[index][2][i]
         ax.scatter(x1_next, x2_next, c='r')
-        if i > 0:
-            x1_prev, x2_prev = best_solutions[index][1][i - 1], best_solutions[index][2][i - 1]
-            plt.plot((x1_prev, x1_next), (x2_prev, x2_next), c='r')
+        # if i > 0:
+            # x1_prev, x2_prev = best_solutions[index][1][i - 1], best_solutions[index][2][i - 1]
+            # plt.plot((x1_prev, x1_next), (x2_prev, x2_next), c='r')
 
 def animate(i):
     ax.clear()

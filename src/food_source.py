@@ -30,16 +30,16 @@ class FoodSource:
 
         nectar = 0.0
 
-        nectar = self.get_fn_val()
-
-        return nectar
-
-        # if self.get_fn_val() > 0:
-        #     nectar = 1.0 / (1.0 + self.get_fn_val())
-        # else:
-        #     nectar = 1.0 + abs(self.get_fn_val())
+        # nectar = self.get_fn_val()
         #
         # return nectar
+
+        if self.get_fn_val() >= 0:
+            nectar = 1.0 / (1.0 + self.get_fn_val())
+        else:
+            nectar = 1.0 + abs(self.get_fn_val())
+
+        return nectar
 
     def get_id(self) -> str:
         return self._id
